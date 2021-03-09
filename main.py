@@ -1,5 +1,8 @@
 from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import pandas as panda
+import matplotlib.pyplot as plot
 
 web_url = 'https://finviz.com/quote.ashx?t='
 companies = ['AMZN', 'AMD','FB']
@@ -12,7 +15,7 @@ for company in companies:
     req = Request(url=url, headers={'user-agent':'my-app'})
     response = urlopen(req)
 
-    html = BeautifulSoup(response,'html')
+    html = BeautifulSoup(response,'html.parser')
     news_table = html.find(id='news-table')
     news_tables[company] = news_table
     break
@@ -33,7 +36,7 @@ for company, news_table in news_tables.items():
 
         parsed_data.append([company, date, time, title])
         
-print(parsed_data)
+# print(parsed_data)
 
 # amazon_data = news_tables['AMZN']
 # amazon_rows = amazon_data.findAll('tr')
@@ -42,3 +45,20 @@ print(parsed_data)
 #     title = row.a.text
 #     timestamp = row.td.text
 #     print(timestamp + " " + title)
+
+data_frame = panda.DataFrame(parsed_data, columns=['company', 'date', 'time', 'title'])
+
+vader = SentimentIntensityAnalyzer()
+
+compound_title = lambda title: vader.polarity_scores(str(title))['compound']
+
+data_frame['compound'] = data_frame['title'].apply(compound_title)
+data_frame['date'] = panda.to_datetime(data_frame.date).dt.date
+
+#print(data_frame.head())
+
+plot.figure(figsize=(10,8))
+
+mean_dataframe = data_frame.groupby(['company','date']).mean()
+
+print(mean_dataframe)
