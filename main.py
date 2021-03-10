@@ -5,7 +5,7 @@ import pandas as panda
 import matplotlib.pyplot as plot
 
 web_url = 'https://finviz.com/quote.ashx?t='
-companies = ['AMZN', 'AMD','FB']
+companies = ['AMZN', 'GOOG','FB']
 
 news_tables = {}
 
@@ -18,7 +18,7 @@ for company in companies:
     html = BeautifulSoup(response,'html.parser')
     news_table = html.find(id='news-table')
     news_tables[company] = news_table
-    break
+    #break
 
 parsed_data = []
 
@@ -60,5 +60,9 @@ data_frame['date'] = panda.to_datetime(data_frame.date).dt.date
 plot.figure(figsize=(10,8))
 
 mean_dataframe = data_frame.groupby(['company','date']).mean()
+mean_dataframe = mean_dataframe.unstack()
+mean_dataframe = mean_dataframe.xs('compound', axis = "columns").transpose()
+mean_dataframe.plot(kind='bar')
+#print(mean_dataframe)
 
-print(mean_dataframe)
+plot.show()
